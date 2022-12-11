@@ -281,7 +281,8 @@ class CampaignController extends Controller
       ]);
     }
   }
-  public function checkRoleAdminAndDacMember(){
+  public function checkRoleAdminAndDacMember()
+  {
     $userRoles = User::find(auth()->user()->id)->roles()->get();
     $countRole = 0;
     for ($i = 0; $i < $userRoles->count(); $i++) {
@@ -293,253 +294,68 @@ class CampaignController extends Controller
   }
   // get campaign by search + pagination
   public function getCampaignsSearchPagination(Request $request)
-  { 
-    // $userRoles = User::find(auth()->user()->id)->roles()->get();
-    // $countRole = 0;
-    // for ($i = 0; $i < $userRoles->count(); $i++) {
-    //   if ($userRoles[$i]->role_name === 'admin' || $userRoles[$i]->role_name === 'dac_member') {
-    //     $countRole += 1;
-    //   }
-    // }
-    if ($this->checkRoleAdminAndDacMember() == 1 || $this->checkRoleAdminAndDacMember() == 2  ) {
+  {
+    $limitNumberRecords = 3;
+    $offset = ($request->page_number - 1) * $limitNumberRecords;
+    $validator = Validator::make($request->all(), [
+      'page_number' => 'required|integer'
+    ]);
+    if ($validator->fails()) {
+      return response()->json([
+        "statusCode" => 400,
+        "message" => "Validation error",
+        "errors" => $validator->errors()
+      ]);
+    }
+    if ($request->key_word === null) {
+      $key_word = '';
+    } else {
+      $key_word = $request->key_word;
+    }
+    $campaigns = [];
+    $countCampaigns = 0;
+    if ($this->checkRoleAdminAndDacMember() == 1 || $this->checkRoleAdminAndDacMember() == 2) {
       if ($request->start_time === null && $request->end_time === null) {
-        $validator = Validator::make($request->all(), [
-          'page_number' => 'required|integer',
-          'number_of_element' => 'required|integer'
-        ]);
-        if ($validator->fails()) {
-          return response()->json([
-            "statusCode" => 400,
-            "message" => "Validation error",
-            "errors" => $validator->errors()
-          ]);
-        }
-
-        if ($request->key_word === null) {
-          $key_word = '';
-        } else {
-          $key_word = $request->key_word;
-        }
-        $limit = $request->number_of_element;
-        $offset = ($request->page_number - 1) * $limit;
-        $campaigns = Campaign::where("name", "like", "%" . $key_word . "%")->where("is_deleted", 0)->limit($limit)->offset($offset)->orderBy('id', 'DESC')->get();
-        $allCampaignsSearch = Campaign::where("name", "like", "%" . $key_word . "%")->where("is_deleted", 0)->get();
-        $countCampaigns = count($allCampaignsSearch);
-        return response()->json([
-          "statusCode" => 200,
-          "content" => $campaigns,
-          "totalRecord" => $countCampaigns
-        ]);
+        $campaigns = Campaign::where("name", "like", "%" . $key_word . "%")->where("is_deleted", 0)->limit($limitNumberRecords)->offset($offset)->orderBy('id', 'DESC')->get();
+        $countCampaigns = count(Campaign::where("name", "like", "%" . $key_word . "%")->where("is_deleted", 0)->get());
       } else {
         if ($request->start_time === null && $request->end_time !== null) {
-          $validator = Validator::make($request->all(), [
-            'page_number' => 'required|integer',
-            'number_of_element' => 'required|integer',
-            'end_time' => 'required'
-          ]);
-          if ($validator->fails()) {
-            return response()->json([
-              "statusCode" => 400,
-              "message" => "Validation error",
-              "errors" => $validator->errors()
-            ]);
-          }
-          if ($request->key_word === null) {
-            $key_word = '';
-          } else {
-            $key_word = $request->key_word;
-          }
-          $limit = $request->number_of_element;
-          $offset = ($request->page_number - 1) * $limit;
-          $campaigns = Campaign::where("name", "like", "%" . $key_word . "%")->where("is_deleted", 0)->limit($limit)->offset($offset)->where('end_time', '<=', $request->end_time)->orderBy('id', 'DESC')->get();
-          $allCampaignsSearch = Campaign::where("name", "like", "%" . $key_word . "%")->where("is_deleted", 0)->where('end_time', '<=', $request->end_time)->get();
-          $countCampaigns = count($allCampaignsSearch);
-          return response()->json([
-            "statusCode" => 200,
-            "content" => $campaigns,
-            "totalRecord" => $countCampaigns
-          ]);
+          $campaigns = Campaign::where("name", "like", "%" . $key_word . "%")->where("is_deleted", 0)->limit($limitNumberRecords)->offset($offset)->where('end_time', '<=', $request->end_time)->orderBy('id', 'DESC')->get();
+          $countCampaigns = count(Campaign::where("name", "like", "%" . $key_word . "%")->where("is_deleted", 0)->where('end_time', '<=', $request->end_time)->get());
         } else {
           if ($request->start_time !== null && $request->end_time === null) {
-            $validator = Validator::make($request->all(), [
-              'page_number' => 'required|integer',
-              'number_of_element' => 'required|integer',
-              'start_time' => 'required'
-            ]);
-            if ($validator->fails()) {
-              return response()->json([
-                "statusCode" => 400,
-                "message" => "Validation error",
-                "errors" => $validator->errors()
-              ]);
-            }
-            if ($request->key_word === null) {
-              $key_word = '';
-            } else {
-              $key_word = $request->key_word;
-            }
-            $limit = $request->number_of_element;
-            $offset = ($request->page_number - 1) * $limit;
-            $campaigns = Campaign::where("name", "like", "%" . $key_word . "%")->where("is_deleted", 0)->limit($limit)->offset($offset)->where('start_time', '>=', $request->start_time)->orderBy('id', 'DESC')->get();
-            $allCampaignsSearch = Campaign::where("name", "like", "%" . $key_word . "%")->where("is_deleted", 0)->where('start_time', '>=', $request->start_time)->get();
-            $countCampaigns = count($allCampaignsSearch);
-            return response()->json([
-              "statusCode" => 200,
-              "content" => $campaigns,
-              "totalRecord" => $countCampaigns
-            ]);
+            $campaigns = Campaign::where("name", "like", "%" . $key_word . "%")->where("is_deleted", 0)->limit($limitNumberRecords)->offset($offset)->where('start_time', '>=', $request->start_time)->orderBy('id', 'DESC')->get();
+            $countCampaigns = count(Campaign::where("name", "like", "%" . $key_word . "%")->where("is_deleted", 0)->where('start_time', '>=', $request->start_time)->get());
           } else {
-            $validator = Validator::make($request->all(), [
-              'page_number' => 'required|integer',
-              'number_of_element' => 'required|integer',
-              'start_time' => 'required',
-              'end_time' => 'required|after:start_time'
-            ]);
-            if ($validator->fails()) {
-              return response()->json([
-                "statusCode" => 400,
-                "message" => "Validation error",
-                "errors" => $validator->errors()
-              ]);
-            }
-            if ($request->key_word === null) {
-              $key_word = '';
-            } else {
-              $key_word = $request->key_word;
-            }
-            $limit = $request->number_of_element;
-            $offset = ($request->page_number - 1) * $limit;
-            $campaigns = Campaign::where("name", "like", "%" . $key_word . "%")->where("is_deleted", 0)->limit($limit)->offset($offset)->where('start_time', '>=', $request->start_time)->where('end_time', '<=', $request->end_time)->orderBy('id', 'DESC')->get();
-            $allCampaignsSearch = Campaign::where("name", "like", "%" . $key_word . "%")->where("is_deleted", 0)->where('start_time', '>=', $request->start_time)->where('end_time', '<=', $request->end_time)->get();
-            $countCampaigns = count($allCampaignsSearch);
-            return response()->json([
-              "statusCode" => 200,
-              "content" => $campaigns,
-              "totalRecord" => $countCampaigns
-            ]);
+            $campaigns = Campaign::where("name", "like", "%" . $key_word . "%")->where("is_deleted", 0)->limit($limitNumberRecords)->offset($offset)->where('start_time', '>=', $request->start_time)->where('end_time', '<=', $request->end_time)->orderBy('id', 'DESC')->get();
+            $countCampaigns = count(Campaign::where("name", "like", "%" . $key_word . "%")->where("is_deleted", 0)->where('start_time', '>=', $request->start_time)->where('end_time', '<=', $request->end_time)->get());
           }
         }
       }
     } else {
       if ($request->start_time === null && $request->end_time === null) {
-        $validator = Validator::make($request->all(), [
-          'page_number' => 'required|integer',
-          'number_of_element' => 'required|integer'
-        ]);
-        if ($validator->fails()) {
-          return response()->json([
-            "statusCode" => 400,
-            "message" => "Validation error",
-            "errors" => $validator->errors()
-          ]);
-        }
-
-        if ($request->key_word === null) {
-          $key_word = '';
-        } else {
-          $key_word = $request->key_word;
-        }
-        $limit = $request->number_of_element;
-        $offset = ($request->page_number - 1) * $limit;
-        $campaigns = Campaign::where("name", "like", "%" . $key_word . "%")->where("is_deleted", 0)->where("user_id", auth()->user()->id)->limit($limit)->offset($offset)->orderBy('id', 'DESC')->get();
-        $allCampaignsSearch = Campaign::where("name", "like", "%" . $key_word . "%")->where("is_deleted", 0)->where("user_id", auth()->user()->id)->get();
-        $countCampaigns = count($allCampaignsSearch);
-        return response()->json([
-          "statusCode" => 200,
-          "content" => $campaigns,
-          "totalRecord" => $countCampaigns
-        ]);
+        $campaigns = Campaign::where("name", "like", "%" . $key_word . "%")->where("is_deleted", 0)->where("user_id", auth()->user()->id)->limit($limitNumberRecords)->offset($offset)->orderBy('id', 'DESC')->get();
+        $countCampaigns = count(Campaign::where("name", "like", "%" . $key_word . "%")->where("is_deleted", 0)->where("user_id", auth()->user()->id)->get());
       } else {
         if ($request->start_time === null && $request->end_time !== null) {
-          $validator = Validator::make($request->all(), [
-            'page_number' => 'required|integer',
-            'number_of_element' => 'required|integer',
-            'end_time' => 'required'
-          ]);
-          if ($validator->fails()) {
-            return response()->json([
-              "statusCode" => 400,
-              "message" => "Validation error",
-              "errors" => $validator->errors()
-            ]);
-          }
-          if ($request->key_word === null) {
-            $key_word = '';
-          } else {
-            $key_word = $request->key_word;
-          }
-          $limit = $request->number_of_element;
-          $offset = ($request->page_number - 1) * $limit;
-          $campaigns = Campaign::where("name", "like", "%" . $key_word . "%")->where("is_deleted", 0)->where("user_id", auth()->user()->id)->limit($limit)->offset($offset)->where('end_time', '<=', $request->end_time)->orderBy('id', 'DESC')->get();
-          $allCampaignsSearch = Campaign::where("name", "like", "%" . $key_word . "%")->where("is_deleted", 0)->where("user_id", auth()->user()->id)->where('end_time', '<=', $request->end_time)->get();
-          $countCampaigns = count($allCampaignsSearch);
-          return response()->json([
-            "statusCode" => 200,
-            "content" => $campaigns,
-            "totalRecord" => $countCampaigns
-          ]);
+          $campaigns = Campaign::where("name", "like", "%" . $key_word . "%")->where("is_deleted", 0)->where("user_id", auth()->user()->id)->limit($limitNumberRecords)->offset($offset)->where('end_time', '<=', $request->end_time)->orderBy('id', 'DESC')->get();
+          $countCampaigns = count(Campaign::where("name", "like", "%" . $key_word . "%")->where("is_deleted", 0)->where("user_id", auth()->user()->id)->where('end_time', '<=', $request->end_time)->get());
         } else {
           if ($request->start_time !== null && $request->end_time === null) {
-            $validator = Validator::make($request->all(), [
-              'page_number' => 'required|integer',
-              'number_of_element' => 'required|integer',
-              'start_time' => 'required'
-            ]);
-            if ($validator->fails()) {
-              return response()->json([
-                "statusCode" => 400,
-                "message" => "Validation error",
-                "errors" => $validator->errors()
-              ]);
-            }
-            if ($request->key_word === null) {
-              $key_word = '';
-            } else {
-              $key_word = $request->key_word;
-            }
-            $limit = $request->number_of_element;
-            $offset = ($request->page_number - 1) * $limit;
-            $campaigns = Campaign::where("name", "like", "%" . $key_word . "%")->where("is_deleted", 0)->where("user_id", auth()->user()->id)->limit($limit)->offset($offset)->where('start_time', '>=', $request->start_time)->orderBy('id', 'DESC')->get();
-            $allCampaignsSearch = Campaign::where("name", "like", "%" . $key_word . "%")->where("is_deleted", 0)->where("user_id", auth()->user()->id)->where('start_time', '>=', $request->start_time)->get();
-            $countCampaigns = count($allCampaignsSearch);
-            return response()->json([
-              "statusCode" => 200,
-              "content" => $campaigns,
-              "totalRecord" => $countCampaigns
-            ]);
+            $campaigns = Campaign::where("name", "like", "%" . $key_word . "%")->where("is_deleted", 0)->where("user_id", auth()->user()->id)->limit($limitNumberRecords)->offset($offset)->where('start_time', '>=', $request->start_time)->orderBy('id', 'DESC')->get();
+            $countCampaigns = count(Campaign::where("name", "like", "%" . $key_word . "%")->where("is_deleted", 0)->where("user_id", auth()->user()->id)->where('start_time', '>=', $request->start_time)->get());
           } else {
-            $validator = Validator::make($request->all(), [
-              'page_number' => 'required|integer',
-              'number_of_element' => 'required|integer',
-              'start_time' => 'required',
-              'end_time' => 'required|after:start_time'
-            ]);
-            if ($validator->fails()) {
-              return response()->json([
-                "statusCode" => 400,
-                "message" => "Validation error",
-                "errors" => $validator->errors()
-              ]);
-            }
-            if ($request->key_word === null) {
-              $key_word = '';
-            } else {
-              $key_word = $request->key_word;
-            }
-            $limit = $request->number_of_element;
-            $offset = ($request->page_number - 1) * $limit;
-            $campaigns = Campaign::where("name", "like", "%" . $key_word . "%")->where("is_deleted", 0)->where("user_id", auth()->user()->id)->limit($limit)->offset($offset)->where('start_time', '>=', $request->start_time)->where('end_time', '<=', $request->end_time)->orderBy('id', 'DESC')->get();
-            $allCampaignsSearch = Campaign::where("name", "like", "%" . $key_word . "%")->where("is_deleted", 0)->where("user_id", auth()->user()->id)->where('start_time', '>=', $request->start_time)->where('end_time', '<=', $request->end_time)->get();
-            $countCampaigns = count($allCampaignsSearch);
-            return response()->json([
-              "statusCode" => 200,
-              "content" => $campaigns,
-              "totalRecord" => $countCampaigns
-            ]);
+            $campaigns = Campaign::where("name", "like", "%" . $key_word . "%")->where("is_deleted", 0)->where("user_id", auth()->user()->id)->limit($limitNumberRecords)->offset($offset)->where('start_time', '>=', $request->start_time)->where('end_time', '<=', $request->end_time)->orderBy('id', 'DESC')->get();
+            $countCampaigns = count(Campaign::where("name", "like", "%" . $key_word . "%")->where("is_deleted", 0)->where("user_id", auth()->user()->id)->where('start_time', '>=', $request->start_time)->where('end_time', '<=', $request->end_time)->get());
           }
         }
       }
     }
+    return response()->json([
+      "statusCode" => 200,
+      "content" => $campaigns,
+      "totalRecord" => $countCampaigns
+    ]);
   }
   //export csv
   public function export()
