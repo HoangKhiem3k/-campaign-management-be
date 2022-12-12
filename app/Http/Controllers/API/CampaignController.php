@@ -15,7 +15,6 @@ use Maatwebsite\Excel\Concerns\FromCollection;
 
 class CampaignController extends Controller
 {
-
   //create campaigns
   public function createCampaign(Request $request)
   {

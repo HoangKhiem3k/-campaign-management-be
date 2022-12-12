@@ -80,7 +80,6 @@ class AccountController extends Controller
       'content' => $accountInfo[0]
     ]);
   }
-  // viet them ham protected de check role_id if(role = dac_member || admin || auth()->user()->id() = campaign->user_id){update}
   // update account 
   public function updateAccount(Request $request)
   {
@@ -137,7 +136,6 @@ class AccountController extends Controller
       ]);
     }
     $accounnt = User::find($request->account_id);
-    // $accounnt = User::where('id', $request->account_id)->first();
     if ($accounnt) {
       User::where('id', $request->account_id)->update([
         'is_deleted' => 1,
@@ -210,3 +208,5 @@ class AccountController extends Controller
     ]);
   }
 }
+
+

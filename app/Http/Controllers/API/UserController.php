@@ -74,9 +74,7 @@ class UserController extends Controller
       $tmpToken = JWTAuth::setToken($token);
       $payLoad = JWTAuth::getPayload($tmpToken)->toArray();
       $time_access_token = date('Y-m-d H:i:s', $payLoad['exp']);
-      //create time exp for refresh token
       $time_refresh_token = Carbon::now()->addMinutes(config('jwt.refresh_ttl'))->format('Y-m-d H:i:s');
-      // create record for table RefreshToken
       RefreshToken::create([
         'user_id' => auth()->user()->id,
         'refresh_token' => $refreshToken,
@@ -122,21 +120,12 @@ class UserController extends Controller
   public function profile()
   {
     try {
-      // $userinfor = User::with('roles')->get();
       $userRole = User::find(auth()->user()->id)->roles()->get();
-      // $userProfile = DB::table('users')
-      //   ->join('role_user', 'users.id', '=', 'role_user.user_id')
-      //   ->join('roles', 'roles.id', '=', 'role_user.role_id')
-      //   ->where('users.id',  auth()->user()->id)
-      //   ->get();
       $userProfile = User::where('id', auth()->user()->id)->first();
       $object = (object) [
         'userProfile' => $userProfile,
         'userRole' => $userRole,
       ];
-        
-      
-      // $user = User::where('email', auth()->user()->email)->with('permissions')->get();
       return response()->json(['statusCode' => 200, 'content' => $object]);
     } catch (\Exception $e) {
       return response()->json(['statusCode' => 500, 'message' => $e->getMessage()]);
@@ -200,11 +189,9 @@ class UserController extends Controller
       $user->remember_token = '';
       $user->email_verified_at = $datetime;
       $user->save();
-      // return response()->json(['success' => true,'message' => 'Email vefiry successfully!']);
       return "<h1>Email verified successfully</h1>";
     } else {
       return view('404');
-      // return response()->json(['success' => false,'message' => 'User not found!']);
     }
   }
   // refresh token
@@ -222,7 +209,6 @@ class UserController extends Controller
   }
   public function refreshToken(Request $request)
   {
-    // $now = Carbon::today()->toDateString();
     $checkRefreshToken = RefreshToken::where('refresh_token', $request->refresh_token)
       ->where('expiry', '>', Carbon::now())
       ->first();
@@ -237,3 +223,6 @@ class UserController extends Controller
     }
   }
 }
+
+
+

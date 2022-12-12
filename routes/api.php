@@ -35,3 +35,6 @@ Route::group(['middleware' => ['jwtauth', 'admin', 'api']], function ($routes) {
   Route::delete('/delete-account', [AccountController::class, 'deleteAccount']);
   Route::get('/get-account-search', [AccountController::class, 'getAccountsSearchPagination']);
 });
+
+
+
